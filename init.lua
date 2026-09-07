@@ -427,7 +427,7 @@ do
   require('catppuccin').setup ({
     flavour = 'mocha',
     styles = {
-      comments = { 'italic' }, -- Disable italics in comments
+      comments = { 'italic' }, -- Enable italics in comments
     },
   })
 
@@ -733,7 +733,8 @@ do
   --  See `:help lsp-config` for information about keys and how to configure
   ---@type table<string, vim.lsp.Config>
   local servers = {
-    -- clangd = {},
+    clangd = {},
+    bashls = {},
     -- gopls = {},
     -- pyright = {},
     -- tsc = {},
