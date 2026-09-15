@@ -427,8 +427,24 @@ do
   require('catppuccin').setup ({
     flavour = 'mocha',
     styles = {
-      comments = { 'italic' }, -- Disable italics in comments
+      comments = { 'italic' }, -- Enable italics in comments
     },
+    color_overrides = {
+      all = {
+        red = '#E64553',
+        mauve = '#CBA6F7',
+      },
+    },
+    custom_highlights = function(colors) -- Setting up custom colors for my preferences.
+        return {
+          Boolean = { fg = colors.mauve },
+          Constant = { fg = colors.red },
+          Number = { fg = colors.sapphire },
+          String = { fg = colors.subtext0 },
+          ["@constant.builtin"] = { fg = colors.mauve },
+       }
+    end,
+    auto_integrations = true,
   })
 
   -- Load the colorscheme here.
