@@ -427,7 +427,7 @@ do
   require('catppuccin').setup ({
     flavour = 'mocha',
     styles = {
-      comments = { 'italic' }, -- Enable italics in comments
+      comments = { 'italic' }, -- Disable italics in comments
     },
   })
 
@@ -734,8 +734,7 @@ do
   ---@type table<string, vim.lsp.Config>
   local servers = {
     clangd = {},
-    bashls = {},
-    -- gopls = {},
+    gopls = {},
     -- pyright = {},
     -- tsc = {},
     --
@@ -792,7 +791,7 @@ do
 
   -- Translates between nvim-lspconfig server names and mason.nvim package names (e.g. lua_ls <-> lua-language-server)
   require('mason-lspconfig').setup {
-    automatic_enable = false, -- Change this to true if you want to automatically enable servers that are installed manually (e.g. via :Mason / :MasonInstall)
+    automatic_enable = true, -- Change this to true if you want to automatically enable servers that are installed manually (e.g. via :Mason / :MasonInstall)
   }
 
   -- Ensure the servers and tools above are installed
@@ -1034,3 +1033,18 @@ end
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
+--
+--
+--  NOTE: Personal Plugins
+--
+do
+  vim.pack.add { gh 'ray-x/go.nvim' }
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = '*.go',
+    callback = function()
+      require('go').setup(){
+        build = ':lua require("go.install").update_all_sync()'
+      }
+    end,
+  })
+end
