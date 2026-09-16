@@ -171,6 +171,12 @@ do
   -- instead raise a dialog asking if you wish to save the current file(s)
   -- See `:help 'confirm'`
   vim.o.confirm = true
+  
+  -- Tab settings
+  vim.o.expandtab = true -- Pressing the TAB key will insert spaces instead of a TAB character
+  vim.o.tabstop = 4 -- A TAB character looks like 4 spaces
+  vim.o.softtabstop = 4 -- Number of spaces inserted instead of a TAB character
+  vim.o.shiftwidth = 4 -- Number of spaces inserted when indenting
 end
 
 -- ============================================================
@@ -442,6 +448,8 @@ do
           Number = { fg = colors.sapphire },
           String = { fg = colors.subtext0 },
           ["@constant.builtin"] = { fg = colors.mauve },
+          ["@variable.parameter.bash"] = { fg = colors.text },
+          ["@function.builtin.zsh"] = { fg = colors.yellow },
        }
     end,
     auto_integrations = true,
@@ -1057,12 +1065,13 @@ end
 --
 do
   vim.pack.add { gh 'ray-x/go.nvim' }
+  vim.pack.add { gh 'ray-x/guihua.lua' }
   vim.api.nvim_create_autocmd("FileType", {
-    pattern = '*.go',
+    pattern = 'go',
     callback = function()
-      require('go').setup(){
+      require('go').setup({
         build = ':lua require("go.install").update_all_sync()'
-      }
+      })
     end,
   })
 end
