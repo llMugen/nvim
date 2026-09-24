@@ -447,15 +447,19 @@ do
           Constant = { fg = colors.red },
           Number = { fg = colors.sapphire },
           String = { fg = colors.subtext0 },
+          Macro = { fg = colors.red },
+          ["@lsp.type.macro"] = { fg = colors.red },
+          ["@lsp.type.macro.cpp"] = { fg = colors.red },
           ["@constant.builtin"] = { fg = colors.mauve },
           ["@variable.parameter.bash"] = { fg = colors.text },
           ["@function.builtin.zsh"] = { fg = colors.yellow },
+          ["@function.builtin"] = { fg = colors.blue },
        }
     end,
     auto_integrations = true,
   })
 
-  -- Load the colorscheme here.
+    -- Load the colorscheme here.
   -- Like many other themes, this one has different styles, and you could load
   -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
   vim.cmd.colorscheme 'catppuccin-nvim'
@@ -578,7 +582,8 @@ do
   local builtin = require 'telescope.builtin'
   vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
   vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
-  vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
+  -- NOTE: To change settings on a specific Telescope feature, we have to wrap the function's name under a function() wrapper.
+  vim.keymap.set('n', '<leader>sf', function() builtin.find_files({ }) end, { desc = '[S]earch [F]iles' })
   vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
   vim.keymap.set({ 'n', 'v' }, '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
   vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
@@ -758,7 +763,7 @@ do
   ---@type table<string, vim.lsp.Config>
   local servers = {
     clangd = {
-      cmd = { "--query-driver=/opt/homebrew/bin/*,/usr/bin/*" }, -- NOTE: This tells clangd it can use the binaries located in this path for standard libraries.
+      cmd = { 'clangd', "--query-driver=/usr/local/vitasdk/bin/*" }, -- NOTE: This tells clangd it can use the binaries located in this path for standard libraries.
     },
     gopls = {},
     -- pyright = {},
@@ -817,7 +822,7 @@ do
 
   -- Translates between nvim-lspconfig server names and mason.nvim package names (e.g. lua_ls <-> lua-language-server)
   require('mason-lspconfig').setup {
-    automatic_enable = true, -- Change this to true if you want to automatically enable servers that are installed manually (e.g. via :Mason / :MasonInstall)
+    automatic_enable = false, -- Change this to true if you want to automatically enable servers that are installed manually (e.g. via :Mason / :MasonInstall)
   }
 
   -- Ensure the servers and tools above are installed
@@ -953,7 +958,7 @@ do
     -- the rust implementation via `'prefer_rust_with_warning'`
     --
     -- See `:help blink-cmp-config-fuzzy` for more information
-    fuzzy = { implementation = 'lua' },
+    fuzzy = { implementation = 'prefer_rust_with_warning' },
 
     -- Shows a signature help window while you type arguments for a function
     signature = { enabled = true },
@@ -1063,6 +1068,7 @@ end
 --
 --  NOTE: Personal Plugins
 --
+-- This is for go.nvim
 do
   vim.pack.add { gh 'ray-x/go.nvim' }
   vim.pack.add { gh 'ray-x/guihua.lua' }
@@ -1075,3 +1081,30 @@ do
     end,
   })
 end
+
+
+-- Custom automcmd for adding header guards to .hpp files
+vim.api.nvim_create_autocmd("BufNewFile", {
+  pattern = { "*.hpp", "*.h" },
+  callback = function()
+    -- Get the filename and convert it to uppercase with underscores
+    local filename = vim.fn.expand("%:t")
+    local guard = string.upper(string.gsub(filename, "[%.-]", "_"))
+
+    -- Define the lines to insert
+    local lines = {
+      "#ifndef " .. guard,
+      "#define " .. guard,
+      "",
+      "",
+      "",
+      "#endif // " .. guard,
+    }
+
+    -- Insert lines at the beginning of the buffer
+    vim.api.nvim_buf_set_lines(0, 0, 0, false, lines)
+    
+    -- Move the cursor to line 4 (inside the guard)
+    vim.api.nvim_win_set_cursor(0, { 4, 0 })
+  end,
+})
