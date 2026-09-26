@@ -99,7 +99,7 @@ do
   vim.g.maplocalleader = ' '
 
   -- Set to true if you have a Nerd Font installed and selected in the terminal
-  vim.g.have_nerd_font = false
+  vim.g.have_nerd_font = true
 
   -- [[ Setting options ]]
   --  See `:help vim.o`
@@ -171,7 +171,7 @@ do
   -- instead raise a dialog asking if you wish to save the current file(s)
   -- See `:help 'confirm'`
   vim.o.confirm = true
-  
+
   -- Tab settings
   vim.o.expandtab = true -- Pressing the TAB key will insert spaces instead of a TAB character
   vim.o.tabstop = 4 -- A TAB character looks like 4 spaces
@@ -454,6 +454,8 @@ do
           ["@variable.parameter.bash"] = { fg = colors.text },
           ["@function.builtin.zsh"] = { fg = colors.yellow },
           ["@function.builtin"] = { fg = colors.blue },
+          ["@markup.heading.2.markdown"] = { fg = colors.sapphire },
+          ["@markup.raw.markdown_inline"] = { fg = colors.mauve },
        }
     end,
     auto_integrations = true,
@@ -766,6 +768,7 @@ do
       cmd = { 'clangd', "--query-driver=/usr/local/vitasdk/bin/*" }, -- NOTE: This tells clangd it can use the binaries located in this path for standard libraries.
     },
     gopls = {},
+    markdown_oxide = {},
     -- pyright = {},
     -- tsc = {},
     --
@@ -857,6 +860,7 @@ do
     format_on_save = function(bufnr)
       -- You can specify filetypes to autoformat on save here:
       local enabled_filetypes = {
+        go = true,
         -- lua = true,
         -- python = true,
       }
@@ -871,6 +875,7 @@ do
     },
     -- You can also specify external formatters in here.
     formatters_by_ft = {
+      go = { "goimports", "gofmt" },
       -- rust = { 'rustfmt' },
       -- Conform can also run multiple formatters sequentially
       -- python = { "isort", "black" },
@@ -979,7 +984,7 @@ do
   vim.pack.add { { src = gh 'nvim-treesitter/nvim-treesitter', version = 'main' } }
 
   -- Ensure basic parsers are installed
-  local parsers = { 'bash', 'c', 'cpp', 'diff', 'vim', 'vimdoc' }
+  local parsers = { 'bash', 'c', 'cpp', 'diff', 'vim', 'vimdoc', 'markdown', 'lua', }
   require('nvim-treesitter').install(parsers)
 
   ---@param buf integer
@@ -1066,22 +1071,28 @@ end
 -- vim: ts=2 sts=2 sw=2 et
 --
 --
---  NOTE: Personal Plugins
+--  NOTE: Personal Plugins and settings.
 --
--- This is for go.nvim
-do
-  vim.pack.add { gh 'ray-x/go.nvim' }
-  vim.pack.add { gh 'ray-x/guihua.lua' }
-  vim.api.nvim_create_autocmd("FileType", {
-    pattern = 'go',
-    callback = function()
-      require('go').setup({
-        build = ':lua require("go.install").update_all_sync()'
-      })
-    end,
-  })
-end
+-- Obsidian nvim
+vim.pack.add {
+  {
+    src = "https://github.com/obsidian-nvim/obsidian.nvim",
+  },
+}
 
+require("obsidian").setup {
+  workspaces = {
+    {
+      name = "Personal",
+      path = '/Users/alexis/Library/Mobile Documents/iCloud~md~obsidian/Documents/Personal/',
+    },
+  },
+  picker = {
+    name = "telescope.nvim",   -- or telescope
+  },
+  legacy_commands = false,
+}
+vim.opt.conceallevel = 1 -- Needed for checkmarks and anything that folds.
 
 -- Custom automcmd for adding header guards to .hpp files
 vim.api.nvim_create_autocmd("BufNewFile", {
@@ -1103,8 +1114,12 @@ vim.api.nvim_create_autocmd("BufNewFile", {
 
     -- Insert lines at the beginning of the buffer
     vim.api.nvim_buf_set_lines(0, 0, 0, false, lines)
-    
     -- Move the cursor to line 4 (inside the guard)
     vim.api.nvim_win_set_cursor(0, { 4, 0 })
   end,
 })
+
+-- Wrap text at 80 characters.
+vim.opt.textwidth = 80
+vim.opt.linebreak = true
+vim.opt.formatoptions:append('t')
