@@ -984,28 +984,25 @@ do
   vim.pack.add { { src = gh 'nvim-treesitter/nvim-treesitter', version = 'main' } }
 
   -- Ensure basic parsers are installed
-  local parsers = { 'bash', 'c', 'cpp', 'diff', 'vim', 'vimdoc', 'markdown', 'lua', }
+  local parsers = { 'bash', 'c', 'cpp', 'diff', 'vim', 'vimdoc', 'markdown', 'lua', 'gitcommit',  }
   require('nvim-treesitter').install(parsers)
 
   ---@param buf integer
   ---@param language string
   local function treesitter_try_attach(buf, language)
-    -- Check if a parser exists and load it
     if not vim.treesitter.language.add(language) then return end
-    -- Enable syntax highlighting and other treesitter features
-    vim.treesitter.start(buf, language)
 
-    -- Enable treesitter based folds
-    -- For more info on folds see `:help folds`
-    -- vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
-    -- vim.wo.foldmethod = 'expr'
+    vim.schedule(function()
+      if not vim.api.nvim_buf_is_valid(buf) then return end
+      vim.treesitter.start(buf, language)
+    end)
 
-    -- Check if treesitter indentation is available for this language, and if so enable it
-    -- in case there is no indent query, the indentexpr will fallback to the vim's built in one
-    local has_indent_query = vim.treesitter.query.get(language, 'indents') ~= nil
-
-    -- Enable treesitter based indentation
-    if has_indent_query then vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()" end
+  -- Treesitter indenting: skip for C/C++, where the built-in indent works well
+    if language ~= 'c' and language ~= 'cpp' then
+      if vim.treesitter.query.get(language, 'indents') ~= nil then
+        vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+      end
+    end
   end
 
   local available_parsers = require('nvim-treesitter').get_available()
@@ -1074,27 +1071,40 @@ end
 --  NOTE: Personal Plugins and settings.
 --
 -- Obsidian nvim
-vim.pack.add {
-  {
-    src = "https://github.com/obsidian-nvim/obsidian.nvim",
-  },
-}
+vim.api.nvim_create_autocmd({ "BufReadPre", "BufNewFile" }, {
+  -- Restricts loading specifically to Markdown files inside your Personal vault
+  pattern = "/Users/alexis/Library/Mobile Documents/iCloud~md~obsidian/Documents/Personal/**.md",
+  callback = function()
+    -- 1. Safely add the pack download stream when the file matches
+    vim.pack.add {
+      {
+        src = "https://github.com/obsidian-nvim/obsidian.nvim",
+      },
+    }
 
-require("obsidian").setup {
-  workspaces = {
-    {
-      name = "Personal",
-      path = '/Users/alexis/Library/Mobile Documents/iCloud~md~obsidian/Documents/Personal/',
-    },
-  },
-  picker = {
-    name = "telescope.nvim",   -- or telescope
-  },
-  legacy_commands = false,
-}
+    -- 2. Run your setup immediately after loading the package
+    require("obsidian").setup {
+      workspaces = {
+        {
+          name = "Personal",
+          path = '/Users/alexis/Library/Mobile Documents/iCloud~md~obsidian/Documents/Personal/',
+        },
+      },
+      picker = {
+        name = "telescope.nvim", 
+      },
+      legacy_commands = false,
+    }
+    
+    -- 3. Delete this autocmd instance so it doesn't try to reload/re-setup 
+    -- the next time you open a different markdown file in the same session.
+    return true
+  end,
+})
+
 vim.opt.conceallevel = 1 -- Needed for checkmarks and anything that folds.
 
--- Custom automcmd for adding header guards to .hpp files
+-- Custom autocmd for adding header guards to .hpp files
 vim.api.nvim_create_autocmd("BufNewFile", {
   pattern = { "*.hpp", "*.h" },
   callback = function()
@@ -1123,3 +1133,15 @@ vim.api.nvim_create_autocmd("BufNewFile", {
 vim.opt.textwidth = 80
 vim.opt.linebreak = true
 vim.opt.formatoptions:append('t')
+
+-- Custom autocmd for git commits to wrap with 50/72 rule.
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "gitcommit",
+  callback = function()
+    -- Show vertical lines at column 51 (for the title) and 73 (for the body)
+    vim.opt_local.colorcolumn = "51,73"
+    -- Automatically wrap lines at 72 characters for the body text
+    vim.opt_local.textwidth = 72
+  end,
+})
+
