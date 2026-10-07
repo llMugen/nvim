@@ -432,6 +432,7 @@ do
   vim.pack.add { gh 'catppuccin/nvim' }
   require('catppuccin').setup ({
     flavour = 'mocha',
+    --flavour = 'latte',
     styles = {
       comments = { 'italic' }, -- Enable italics in comments
     },
@@ -508,7 +509,26 @@ do
   --  and try some other statusline plugin
   local statusline = require 'mini.statusline'
   -- Set `use_icons` to true if you have a Nerd Font
-  statusline.setup { use_icons = vim.g.have_nerd_font }
+  statusline.setup({
+  use_icons = vim.g.have_nerd_font, -- or vim.g.have_nerd_font
+  content = {
+    active = function()
+      local mode, mode_hl = statusline.section_mode({ trunc_width = 120 })
+      local filename = statusline.section_filename({ trunc_width = 140 })
+      local diagnostics = statusline.section_diagnostics({ trunc_width = 75 })
+
+      return statusline.combine_groups({
+        { hl = mode_hl, strings = { mode } },
+        '%<', -- where to truncate if the line is too long
+        { hl = 'MiniStatuslineFilename', strings = { filename } },
+        '%=',
+        { hl = 'MiniStatuslineDevinfo', strings = { diagnostics } },
+      })
+    end,
+  },
+})
+
+  statusline.section_filename = function() return '%t%m%r' end
 
   -- You can configure sections in the statusline by overriding their
   -- default behavior. For example, here we set the section for
@@ -769,6 +789,10 @@ do
     },
     gopls = {},
     markdown_oxide = {},
+    terraformls = {
+      cmd = { "terraform-ls", "serve" },
+      filetypes = { "terraform", "terraform-vars" },
+    },
     -- pyright = {},
     -- tsc = {},
     --
@@ -984,7 +1008,7 @@ do
   vim.pack.add { { src = gh 'nvim-treesitter/nvim-treesitter', version = 'main' } }
 
   -- Ensure basic parsers are installed
-  local parsers = { 'bash', 'c', 'cpp', 'diff', 'vim', 'vimdoc', 'markdown', 'lua', 'gitcommit',  }
+  local parsers = { 'bash', 'c', 'cpp', 'diff', 'vim', 'vimdoc', 'markdown', 'lua', 'gitcommit', 'terraform',}
   require('nvim-treesitter').install(parsers)
 
   ---@param buf integer
